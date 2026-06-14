@@ -180,6 +180,35 @@ services:
     networks:
       - cms_network
 
+  # ── Startup announcement ─────────────────────────────────────────────────
+  cms_announce:
+    image: alpine:3.20
+    container_name: cms_announce
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        if [ "$$PROXY_PORT" = "80" ] || [ -z "$$PROXY_PORT" ]; then
+          LINK="http://localhost"
+        else
+          LINK="http://localhost:$$PROXY_PORT"
+        fi
+        echo ""
+        echo "╔══════════════════════════════════════════════╗"
+        echo "║         CMS is up and running!               ║"
+        echo "║                                              ║"
+        printf  "║  Open in browser: %-27s║\n" "$$LINK"
+        echo "╚══════════════════════════════════════════════╝"
+        echo ""
+    environment:
+      PROXY_PORT: "${PROXY_PORT:-80}"
+    depends_on:
+      cms_backend:
+        condition: service_healthy
+    networks:
+      - cms_network
+
   # ── MySQL ─────────────────────────────────────────────────────────────────
   cms_db:
     image: mysql:8.4

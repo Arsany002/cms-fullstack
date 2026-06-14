@@ -23,6 +23,7 @@ WORKDIR /app
 # Source is volume-mounted at runtime; node_modules come from the deps stage.
 # The CMD below is overridden in docker-compose.override.yml if needed.
 EXPOSE 5173
+COPY . .
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
 
 # ─── Stage 3: Production build ───────────────────────────────────────────────
