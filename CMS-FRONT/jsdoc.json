@@ -1,0 +1,17 @@
+{
+    "source": {
+        "include": [
+            "src"
+        ],
+        "includePattern": ".+\\.(js|jsx)$",
+        "excludePattern": "(node_modules|dist|build)"
+    },
+    "plugins": [
+        "plugins/markdown"
+    ],
+    "opts": {
+        "destination": "docs/frontend/code-reference",
+        "recurse": true,
+        "readme": "README.md"
+    }
+}

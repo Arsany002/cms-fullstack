@@ -1,0 +1,19 @@
+cms-front@1.0.0 /Users/apple/CMS/CMS-FRONT
+├── @tanstack/react-query-devtools@5.101.0
+├── @tanstack/react-query@5.101.0
+├── @types/react-dom@18.3.7
+├── @types/react@18.3.31
+├── @vitejs/plugin-react@4.7.0
+├── autoprefixer@10.5.0
+├── axios@1.17.0
+├── dependency-cruiser@17.4.3
+├── jsdoc@4.0.5
+├── license-checker@25.0.1
+├── postcss@8.5.15
+├── react-dom@18.3.1
+├── react-hook-form@7.79.0
+├── react-router-dom@6.30.4
+├── react@18.3.1
+├── tailwindcss@3.4.19
+└── vite@5.4.21
+

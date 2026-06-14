@@ -1,0 +1,38 @@
+{
+  "name": "cms-front",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "docs:frontend": "jsdoc -c jsdoc.json",
+    "docs:deps": "npm list --depth=0 > docs/frontend/dependencies.txt",
+    "docs:licenses": "license-checker --summary > docs/frontend/licenses-summary.txt",
+    "docs:md": "node scripts/generate-frontend-docs.cjs",
+    "docs:arch": "depcruise src --output-type html > docs/frontend/architecture/dependency-report.html"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.28.0",
+    "@tanstack/react-query-devtools": "^5.28.0",
+    "axios": "^1.6.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.51.1",
+    "react-router-dom": "^6.22.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "dependency-cruiser": "^17.4.3",
+    "jsdoc": "^4.0.5",
+    "license-checker": "^25.0.1",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.1.6"
+  }
+}
