@@ -57,8 +57,8 @@ docker compose exec cms_backend php artisan passport:client --personal --name="C
 
 ### E2E tests (Playwright)
 
+**Docker mode** (when the stack is running):
 ```bash
-# Run from CMS-FRONT/
 cd CMS-FRONT
 TEST_BASE_URL=http://localhost:5173 npx playwright test --reporter=list
 # With HTML report:
@@ -66,15 +66,32 @@ TEST_BASE_URL=http://localhost:5173 npx playwright test --reporter=html
 # Report opens at: CMS-FRONT/playwright-report/index.html
 ```
 
+**Local mode** (backend on port 8001, frontend on port 5174, no Docker):
+```bash
+# Terminal 1 — backend
+cd CMS-BACK && php artisan serve --port=8001
+
+# Terminal 2 — frontend (uses CMS-FRONT/.env.local → VITE_API_BASE_URL=http://127.0.0.1:8001/api/v1)
+cd CMS-FRONT && npm run dev -- --port 5174
+
+# Terminal 3 — run tests
+cd CMS-FRONT
+TEST_BASE_URL=http://127.0.0.1:5174 \
+TEST_API_URL=http://127.0.0.1:8001/api/v1 \
+CMS_LOCAL_BACKEND=1 \
+npx playwright test --reporter=list
+```
+
+`CMS_LOCAL_BACKEND=1` tells the test cleanup helper (`tests/e2e/helpers/cleanup.js`) to call `php artisan cms:cleanup-test-data` directly in `CMS-BACK/` instead of going through `docker compose exec`.
+
 **Prerequisites before running E2E tests:**
-- Stack must be up: `docker compose up -d`
-- At least one Passport personal access client must exist:
-  `docker compose exec cms_backend php artisan passport:client --personal --name="CMS API" --no-interaction`
+- At least one Passport personal access client must exist (Docker: `docker compose exec cms_backend php artisan passport:client --personal --name="CMS API" --no-interaction`; local: `cd CMS-BACK && php artisan passport:client --personal --name="CMS API" --no-interaction`)
 - At least one active clinic must exist in the database (used by the registration test)
+- `CMS-FRONT/.env.local` must set `VITE_API_BASE_URL` to the correct backend URL when running locally
 
 ## Architecture
 
-### Backend (`CMS-BACK/`) — Laravel 13, PHP 8.3
+### Backend (`CMS-BACK/`) — Laravel 13, PHP 8.4
 
 **Layered pattern:** `Controller → Service → Repository → Model`
 
@@ -83,7 +100,28 @@ TEST_BASE_URL=http://localhost:5173 npx playwright test --reporter=html
 - Repositories handle all Eloquent queries; injected into services.
 - Models use UUIDs (`HasUuids`), not auto-increment IDs.
 
-**Auth:** Laravel Passport Personal Access Tokens. Token stored/read by the frontend from `localStorage` as `cms_token`.
+**Layer rules (enforced):**
+| Layer | Allowed | Not Allowed |
+|---|---|---|
+| Controller | Inject FormRequest + Service; call service; return ApiResponse | Direct Eloquent queries, `Hash::make()`, inline `$request->validate()`, business conditions |
+| FormRequest | `authorize()`, `rules()`, `messages()` | Business logic, DB queries |
+| Service | Business rules, domain exceptions, `DB::transaction()`, `Cache::lock()`, cross-repo orchestration | `return response()->json(...)`, `abort()`, `$request->...` |
+| Repository | Eloquent queries only | Domain exceptions, HTTP responses |
+| Model | `$fillable`, `$casts`, relationships, `HasUuids`, scopes | Business logic, HTTP responses |
+
+**Architecture audit:** `CMS-BACK/ARCHITECTURE_AUDIT_REPORT.md` documents all violations found, 5 fixes implemented, and remaining recommended refactors.
+
+**Google OAuth (Socialite):**
+- `GET /api/v1/auth/google/redirect?role=doctor&clinic_id=X` — validates role/clinic, stores state in cache 10 min, redirects to Google
+- `GET /api/v1/auth/google/callback` — resolves Google user, finds/creates/links local user, issues a one-time exchange code (5 min TTL), redirects to frontend
+- `POST /api/v1/auth/google/exchange` — exchanges one-time code for Passport token + user; this is what the React `GoogleCallback` page calls
+- Flow uses `Socialite::driver('google')->stateless()` — no sessions needed
+- State (role/clinic) stored in cache under `google_oauth:{uuid}`; exchange code stored under `google_exchange:{uuid}`
+- Public Google registration only allows `doctor` or `assistant`; `super_admin` is rejected at the redirect step
+- `UserRepository::findByGoogleId()` and `linkGoogleAccount()` handle Google identity matching
+- Backend test endpoint `POST /api/v1/testing/google-exchange-seed` (local/testing only) seeds an exchange code for Playwright tests
+
+**Auth:** Laravel Passport Personal Access Tokens. Token stored/read by the frontend from `localStorage` as `cms_token`. The `UserRepository` handles token issuance (`createApiToken`) and revocation (`revokeCurrentToken`) so controllers and services never touch the Passport API directly.
 
 **Role system:** Three roles defined as a PHP-backed enum (`app/Enums/UserRole.php`): `super_admin`, `doctor`, `assistant`. Roles are enforced by a custom `RoleMiddleware` that checks `$user->role->value` against the required role string (not spatie/permission — that package is installed but the custom middleware is what's actually used).
 
@@ -96,7 +134,24 @@ TEST_BASE_URL=http://localhost:5173 npx playwright test --reporter=html
 - `/doctor/*` — scoped to their clinic: schedules, appointments (status updates), prescriptions, patients
 - `/assistant/*` — scoped to their clinic: patients CRUD, appointments CRUD, available slots, doctor list
 
-**Custom exceptions** (`app/Exceptions/`): `AccountDeactivatedException`, `AppointmentConflictException`, `ClinicScopeViolationException`, `InvalidAppointmentStateException`, `SelfDemotionException`.
+**Custom exceptions** (`app/Exceptions/`): `AccountDeactivatedException`, `AppointmentConflictException`, `ClinicScopeViolationException`, `InvalidAppointmentStateException`, `SelfDemotionException`. Each has a `render(): JsonResponse` method — controllers throw them, they render themselves, no controller ever builds an error response manually.
+
+**Google OAuth environment variables** (add to `.env` — see `.env.example` for all options):
+```
+GOOGLE_CLIENT_ID=your-client-id
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI=http://127.0.0.1:8001/api/v1/auth/google/callback   # local
+# GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/google/callback  # Docker dev
+FRONTEND_URL=http://127.0.0.1:5174    # local
+```
+
+**Services:**
+- `AuthService` — login (credential check + active-status guard + token issue), register (wrapped in `DB::transaction()`), logout, me
+- `UserService` — create (password hash + `is_active` default), update (conditional re-hash), updateRole (self-demotion guard)
+- `AppointmentService` — `book()` (BR-07 clinic-patient check + cache lock for double-booking), `reschedule()`, `cancel()`, `updateStatus()`, `getAvailableSlots()`
+- `PrescriptionService` — `create()` (BR-04: only assigned doctor; BR-06: no cancelled appointments), `update()`
+- `ClinicService` — `toggle()` (active/inactive)
+- `DashboardService` — `getStats()`, `getAllAppointments()`, `getAllPrescriptions()` (aggregates across repos)
 
 **API docs:** l5-swagger annotations on controllers; regenerate with `php artisan l5-swagger:generate`.
 

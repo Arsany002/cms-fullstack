@@ -148,6 +148,55 @@ Passport 13 resolves the personal access client from the database. You do not ne
 
 ---
 
+## Google OAuth setup
+
+The app supports "Continue with Google" / "Register with Google" via Laravel Socialite.
+
+### 1. Create Google OAuth credentials
+
+1. Go to [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials).
+2. Create a new **OAuth 2.0 Client ID** → Application type: **Web application**.
+3. Add **Authorized redirect URIs** matching your environment:
+
+| Environment | Redirect URI |
+|---|---|
+| Local (no Docker) | `http://127.0.0.1:8001/api/v1/auth/google/callback` |
+| Docker dev | `http://localhost:8000/api/v1/auth/google/callback` |
+| Production | `https://yourdomain.com/api/v1/auth/google/callback` |
+
+4. Copy **Client ID** and **Client Secret**.
+
+### 2. Add to `.env`
+
+```env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI=http://127.0.0.1:8001/api/v1/auth/google/callback
+FRONTEND_URL=http://127.0.0.1:5174
+```
+
+### How Google registration works
+
+- **Register page:** user selects **Role** (doctor or assistant) and **Clinic** first, then clicks "Register with Google". The backend validates role and clinic before redirecting to Google. `super_admin` cannot be registered this way.
+- **Login page:** "Continue with Google" button redirects without role/clinic. If the Google account already exists in the DB (matched by `google_id` or email), the user is logged in. If not, they are redirected to `/auth/google/callback?error=registration_required` and must use the Register page.
+- Existing email/password accounts are automatically linked to Google on first Google sign-in.
+- No duplicate users: matching by `google_id` first, email second.
+
+### OAuth flow summary
+
+```
+Browser → GET /api/v1/auth/google/redirect?role=doctor&clinic_id=X
+        → Google consent screen
+        → GET /api/v1/auth/google/callback?code=...&state=...
+        → (backend creates user + one-time exchange code)
+        → Redirect to {FRONTEND_URL}/auth/google/callback?code=ONE_TIME_CODE
+        → React: POST /api/v1/auth/google/exchange  { code }
+        → Response: { user, token }  → stored in localStorage
+        → Redirect to role dashboard
+```
+
+---
+
 ## Environment variables
 
 | Variable | Default | Description |
@@ -156,7 +205,7 @@ Passport 13 resolves the personal access client from the database. You do not ne
 | `APP_ENV` | `production` | Laravel environment |
 | `APP_DEBUG` | `false` | Show detailed errors |
 | `APP_URL` | `http://localhost` | Public URL |
-| `FRONTEND_URL` | `http://localhost` | CORS allowed origin |
+| `FRONTEND_URL` | `http://localhost` | CORS allowed origin + Google callback redirect target |
 | `PROXY_PORT` | `80` | Host port for the proxy |
 | `BACKEND_PORT` | `8000` | Host port for backend (dev) |
 | `FRONTEND_PORT` | `5173` | Host port for Vite HMR (dev) |
@@ -167,6 +216,9 @@ Passport 13 resolves the personal access client from the database. You do not ne
 | `REDIS_PASSWORD` | *(required)* | Redis password |
 | `PASSPORT_CLIENT_ID` | *(required)* | Passport personal-access client ID |
 | `PASSPORT_CLIENT_SECRET` | *(required)* | Passport personal-access client secret |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | — | Google OAuth client secret |
+| `GOOGLE_REDIRECT_URI` | — | Backend callback URI registered in Google Console |
 
 ---
 

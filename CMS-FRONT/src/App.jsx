@@ -7,8 +7,9 @@ import Layout         from './components/layout/Layout'
 import Spinner        from './components/common/Spinner'
 
 // Auth
-import Login    from './pages/auth/Login'
-import Register from './pages/auth/Register'
+import Login          from './pages/auth/Login'
+import Register       from './pages/auth/Register'
+import GoogleCallback from './pages/auth/GoogleCallback'
 
 // Admin
 import AdminDashboard      from './pages/admin/Dashboard'
@@ -51,9 +52,10 @@ export default function App() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/login"    element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/"         element={<RootRedirect />} />
+      <Route path="/login"                  element={<Login />} />
+      <Route path="/register"               element={<Register />} />
+      <Route path="/auth/google/callback"   element={<GoogleCallback />} />
+      <Route path="/"                       element={<RootRedirect />} />
 
       {/* Super Admin */}
       <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
