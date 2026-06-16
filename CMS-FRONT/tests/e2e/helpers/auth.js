@@ -13,6 +13,10 @@ export async function apiRegister(userData) {
   return json.data // { user, token }
 }
 
+export async function registerTestUser(userData) {
+  return apiRegister(userData)
+}
+
 /** Call the backend login endpoint and return { user, token }. */
 export async function apiLogin(email, password) {
   const res = await fetch(`${API_BASE}/auth/login`, {
@@ -23,6 +27,19 @@ export async function apiLogin(email, password) {
   const json = await res.json()
   if (!json.success) throw new Error(`Login failed: ${JSON.stringify(json)}`)
   return json.data // { user, token }
+}
+
+export async function apiLogout(token) {
+  const res = await fetch(`${API_BASE}/auth/logout`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(`Logout failed: ${JSON.stringify(json)}`)
+  return json
 }
 
 /**
@@ -53,6 +70,28 @@ export async function injectSession(page, token, user) {
       body: JSON.stringify({ success: true, message: 'Success', data: user }),
     })
   })
+}
+
+export async function verifyLocalStorageAuth(page, expectedUser = null) {
+  const session = await page.evaluate(() => ({
+    token: localStorage.getItem('cms_token'),
+    user: localStorage.getItem('cms_user'),
+  }))
+
+  if (!session.token) throw new Error('Expected cms_token in localStorage')
+  if (!session.user) throw new Error('Expected cms_user in localStorage')
+
+  const user = JSON.parse(session.user)
+  if (expectedUser?.email && user.email !== expectedUser.email) {
+    throw new Error(`Expected localStorage user ${expectedUser.email}, got ${user.email}`)
+  }
+
+  return { token: session.token, user }
+}
+
+export async function logoutViaUI(page) {
+  await page.getByRole('button', { name: /logout|sign out/i }).click()
+  await page.waitForURL(/\/login/, { timeout: 15000 })
 }
 
 /** Full UI login flow — uses the REAL backend (not mocked). */

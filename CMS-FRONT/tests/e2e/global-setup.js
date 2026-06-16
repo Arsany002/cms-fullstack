@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { API_BASE, STATE_FILE, makeSuperAdmin, makeDoctor, makeAssistant, makeClinic } from './helpers/testData.js'
-import { apiRegister, apiLogin } from './helpers/auth.js'
+import { apiRegister } from './helpers/auth.js'
+import { cleanupTestData } from './helpers/cleanup.js'
 
 async function apiFetch(url, method, body, token) {
   const res = await fetch(`${API_BASE}${url}`, {
@@ -17,7 +18,10 @@ async function apiFetch(url, method, body, token) {
 
 export default async function globalSetup() {
   const ts = Date.now()
-  console.log('\n[global-setup] Creating E2E test users and clinic…')
+  console.log('\n[global-setup] Cleaning old Playwright test data...')
+  cleanupTestData()
+
+  console.log('\n[global-setup] Creating Playwright test users and clinic...')
 
   // 1. Register super_admin
   const adminData = makeSuperAdmin(ts)

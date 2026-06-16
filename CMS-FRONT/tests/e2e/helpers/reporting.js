@@ -30,6 +30,20 @@ export async function attachReports(testInfo, { consoleErrors, failedRequests })
   })
 }
 
+export async function attachTestUser(testInfo, name, userData) {
+  const safeData = {
+    ...userData,
+    password: userData?.password ? '[redacted]' : undefined,
+    password_confirmation: userData?.password_confirmation ? '[redacted]' : undefined,
+    token: userData?.token ? '[redacted]' : undefined,
+  }
+
+  await testInfo.attach(name, {
+    body: JSON.stringify(safeData, null, 2),
+    contentType: 'application/json',
+  })
+}
+
 /** Assert no unexpected 500 errors hit the page during the test. */
 export function expect500Free(page, expect) {
   const errors500 = []

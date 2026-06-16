@@ -1,7 +1,6 @@
-import { test, expect } from '@playwright/test'
-import { getTestState } from '../helpers/auth.js'
-import { injectSession } from '../helpers/auth.js'
-import { setupNetworkMonitor, attachReports } from '../helpers/reporting.js'
+import { test, expect } from '../fixtures.js'
+import { getTestState, injectSession, verifyLocalStorageAuth } from '../helpers/auth.js'
+import { attachReports, attachTestUser, setupNetworkMonitor } from '../helpers/reporting.js'
 import { makeAssistant, uniqueTs } from '../helpers/testData.js'
 
 test.describe('Register page', () => {
@@ -56,7 +55,6 @@ test.describe('Register page', () => {
 
   test('successful registration redirects away from /register', async ({ page }, testInfo) => {
     const monitor = setupNetworkMonitor(page)
-    const state = getTestState()
     const ts = uniqueTs()
     const user = makeAssistant(ts)
 
@@ -74,11 +72,9 @@ test.describe('Register page', () => {
 
     await expect(page).not.toHaveURL(/\/register/, { timeout: 15000 })
 
-    const token = await page.evaluate(() => localStorage.getItem('cms_token'))
-    const storedUser = await page.evaluate(() => localStorage.getItem('cms_user'))
-    expect(token).toBeTruthy()
-    expect(storedUser).toBeTruthy()
+    await verifyLocalStorageAuth(page, user)
 
+    await attachTestUser(testInfo, 'registered-test-user', user)
     await attachReports(testInfo, monitor)
   })
 

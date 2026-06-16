@@ -1,4 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
+import { verifyLocalStorageAuth } from './helpers/auth.js';
+import { attachTestUser } from './helpers/reporting.js';
+import { makeAssistant, uniqueTs } from './helpers/testData.js';
 
 test('register new assistant user, authenticate, and load the app', async ({ page }, testInfo) => {
     const consoleErrors = [];
@@ -27,13 +30,7 @@ test('register new assistant user, authenticate, and load the app', async ({ pag
         );
     });
 
-    const timestamp = Date.now();
-
-    const user = {
-        name: `Playwright Assistant ${timestamp}`,
-        email: `playwright_assistant_${timestamp}@example.com`,
-        password: 'Password123456'
-    };
+    const user = makeAssistant(uniqueTs());
 
     await page.goto('/register');
 
@@ -95,16 +92,8 @@ test('register new assistant user, authenticate, and load the app', async ({ pag
     expect(bodyText).toMatch(/dashboard|appointment|patient|clinic|prescription|schedule|assistant/i);
 
     // Confirm frontend auth storage if the app logs the user in.
-    const token = await page.evaluate(() => localStorage.getItem('cms_token'));
-    const storedUser = await page.evaluate(() => localStorage.getItem('cms_user'));
-
-    expect(token).toBeTruthy();
-    expect(storedUser).toBeTruthy();
-
-    await testInfo.attach('registered-user', {
-        body: JSON.stringify(user, null, 2),
-        contentType: 'application/json'
-    });
+    await verifyLocalStorageAuth(page, user);
+    await attachTestUser(testInfo, 'registered-user', user);
 
     await testInfo.attach('console-errors', {
         body: consoleErrors.join('\n') || 'No console errors',

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures.js'
 import { getTestState, injectSession } from '../helpers/auth.js'
 
 test.describe('Doctor — Appointments', () => {

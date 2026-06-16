@@ -1,11 +1,13 @@
-import { test, expect } from '@playwright/test'
-import { getTestState, injectSession } from '../helpers/auth.js'
+import { test, expect } from '../fixtures.js'
+import { getTestState, loginViaUI } from '../helpers/auth.js'
 
 test.describe('Logout', () => {
   test('sign-out button clears session and redirects to login', async ({ page }) => {
     const state = getTestState()
-    await injectSession(page, state.assistant.token, state.assistant.user)
-    await page.goto('/assistant/dashboard')
+    // Use real UI login so this test gets a fresh Passport token.
+    // Logging out revokes that fresh token only — the shared state.assistant.token
+    // used by later tests (e.g. smoke/navigation) stays valid in the DB.
+    await loginViaUI(page, state.assistant.email, state.assistant.password)
     await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
 
     await page.getByRole('button', { name: /sign out/i }).click()
