@@ -13,7 +13,7 @@ export default function AssistantDashboard() {
   const { data: apptData, isLoading } = useQuery({
     queryKey: ['assistant-today-appointments'],
     queryFn: () => getAppointments('assistant', { date: today, per_page: 10 }),
-    select: (r) => r.data.data?.data ?? [],
+    select: (r) => r.data.data ?? [],
   })
 
   return (

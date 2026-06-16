@@ -1,17 +1,21 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../../hooks/useAuth'
 import { getDashboardPath } from '../../utils/roleHelper'
 import Input from '../../components/common/Input'
 import Button from '../../components/common/Button'
 import AlertMessage from '../../components/common/AlertMessage'
+import Spinner from '../../components/common/Spinner'
 
 export default function Login() {
-  const { login } = useAuth()
+  const { login, isAuthenticated, user, loading } = useAuth()
   const navigate = useNavigate()
   const [serverError, setServerError] = useState('')
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm()
+
+  if (loading) return <div className="h-screen flex items-center justify-center"><Spinner size="lg" /></div>
+  if (isAuthenticated) return <Navigate to={getDashboardPath(user?.role)} replace />
 
   const onSubmit = async (data) => {
     setServerError('')

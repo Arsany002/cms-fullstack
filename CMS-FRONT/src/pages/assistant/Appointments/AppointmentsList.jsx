@@ -26,8 +26,8 @@ export default function AssistantAppointmentsList() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['assistant-appointments'] }); setCancelId(null) },
   })
 
-  const appointments = data?.data?.data ?? []
-  const meta         = data?.data?.meta ?? null
+  const appointments = data?.data ?? []
+  const meta         = data?.meta ?? null
 
   return (
     <div>

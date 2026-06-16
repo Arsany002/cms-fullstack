@@ -24,7 +24,7 @@ export default function AppointmentBook() {
   const { data: patientsData } = useQuery({
     queryKey: ['assistant-patients-all'],
     queryFn: () => getPatients('assistant', { per_page: 200 }),
-    select: (r) => r.data.data?.data ?? [],
+    select: (r) => r.data.data ?? [],
   })
 
   const { data: doctorsData } = useQuery({

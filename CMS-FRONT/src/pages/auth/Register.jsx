@@ -1,28 +1,30 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../hooks/useAuth'
 import { getDashboardPath } from '../../utils/roleHelper'
-import { getClinics } from '../../services/clinics'
+import { getPublicClinics } from '../../services/clinics'
 import Input from '../../components/common/Input'
 import Select from '../../components/common/Select'
 import Button from '../../components/common/Button'
 import AlertMessage from '../../components/common/AlertMessage'
+import Spinner from '../../components/common/Spinner'
 
 export default function Register() {
-  const { register: registerUser } = useAuth()
+  const { register: registerUser, isAuthenticated, user, loading } = useAuth()
   const navigate = useNavigate()
   const [serverError, setServerError] = useState('')
   const { register, handleSubmit, watch, setError, formState: { errors, isSubmitting } } = useForm()
-
   const role = watch('role')
-
   const { data: clinicsData } = useQuery({
-    queryKey: ['clinics-list'],
-    queryFn: () => getClinics({ per_page: 100 }),
-    select: (res) => res.data.data?.data ?? res.data.data ?? [],
+    queryKey: ['public-clinics'],
+    queryFn: getPublicClinics,
+    select: (res) => res.data.data ?? [],
   })
+
+  if (loading) return <div className="h-screen flex items-center justify-center"><Spinner size="lg" /></div>
+  if (isAuthenticated) return <Navigate to={getDashboardPath(user?.role)} replace />
 
   const onSubmit = async (data) => {
     setServerError('')

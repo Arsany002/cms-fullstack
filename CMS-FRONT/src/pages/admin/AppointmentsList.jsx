@@ -16,8 +16,8 @@ export default function AdminAppointmentsList() {
     select: (r) => r.data,
   })
 
-  const appointments = data?.data?.data ?? []
-  const meta         = data?.data?.meta ?? null
+  const appointments = data?.data ?? []
+  const meta         = data?.meta ?? null
 
   return (
     <div>

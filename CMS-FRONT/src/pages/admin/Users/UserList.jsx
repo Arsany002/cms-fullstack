@@ -31,8 +31,8 @@ export default function UserList() {
   if (isLoading) return <Spinner size="lg" className="mt-20" />
   if (isError)   return <AlertMessage message={error?.response?.data?.message ?? 'Failed to load users'} />
 
-  const users = data.data?.data ?? []
-  const meta  = data.data?.meta ?? data.meta ?? null
+  const users = data.data ?? []
+  const meta  = data.meta ?? null
 
   return (
     <div>

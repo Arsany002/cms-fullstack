@@ -8,6 +8,9 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:report": "playwright test --reporter=html",
+    "test:e2e:ui": "playwright test --ui",
     "docs:frontend": "jsdoc -c jsdoc.json",
     "docs:deps": "npm list --depth=0 > docs/frontend/dependencies.txt",
     "docs:licenses": "license-checker --summary > docs/frontend/licenses-summary.txt",
@@ -24,6 +27,8 @@
     "react-router-dom": "^6.22.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.61.0",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@vitejs/plugin-react": "^4.2.1",

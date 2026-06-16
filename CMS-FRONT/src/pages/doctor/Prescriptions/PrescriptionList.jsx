@@ -16,8 +16,8 @@ export default function PrescriptionList() {
     select: (r) => r.data,
   })
 
-  const prescriptions = data?.data?.data ?? []
-  const meta          = data?.data?.meta ?? null
+  const prescriptions = data?.data ?? []
+  const meta          = data?.meta ?? null
 
   return (
     <div>

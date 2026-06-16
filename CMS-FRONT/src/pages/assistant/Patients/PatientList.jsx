@@ -18,8 +18,8 @@ export default function AssistantPatientList() {
     select: (r) => r.data,
   })
 
-  const patients = data?.data?.data ?? []
-  const meta     = data?.data?.meta ?? null
+  const patients = data?.data ?? []
+  const meta     = data?.meta ?? null
 
   return (
     <div>

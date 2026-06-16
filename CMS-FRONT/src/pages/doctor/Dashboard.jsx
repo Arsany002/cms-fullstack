@@ -12,13 +12,13 @@ export default function DoctorDashboard() {
   const { data: apptData, isLoading: loadingAppts } = useQuery({
     queryKey: ['doctor-today-appointments'],
     queryFn: () => getAppointments('doctor', { date: today, per_page: 5 }),
-    select: (r) => r.data.data?.data ?? [],
+    select: (r) => r.data.data ?? [],
   })
 
   const { data: rxData, isLoading: loadingRx } = useQuery({
     queryKey: ['doctor-recent-prescriptions'],
     queryFn: () => getPrescriptions({ per_page: 5 }),
-    select: (r) => r.data.data?.data ?? [],
+    select: (r) => r.data.data ?? [],
   })
 
   return (

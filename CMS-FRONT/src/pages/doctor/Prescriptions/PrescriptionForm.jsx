@@ -28,7 +28,7 @@ export default function PrescriptionForm() {
   const { data: appts } = useQuery({
     queryKey: ['doctor-appointments-all'],
     queryFn: () => getAppointments('doctor', { per_page: 100, status: 'confirmed' }),
-    select: (r) => r.data.data?.data ?? [],
+    select: (r) => r.data.data ?? [],
   })
 
   const { data: existingData, isLoading } = useQuery({
@@ -70,15 +70,15 @@ export default function PrescriptionForm() {
           </Select>
 
           <div className="mb-4">
-            <label className="form-label">Diagnosis</label>
-            <textarea className={`form-input ${errors.diagnosis ? 'border-red-500' : ''}`} rows={3}
+            <label htmlFor="diagnosis" className="form-label">Diagnosis</label>
+            <textarea id="diagnosis" className={`form-input ${errors.diagnosis ? 'border-red-500' : ''}`} rows={3}
               {...register('diagnosis', { required: 'Diagnosis is required' })} />
             {errors.diagnosis && <p className="form-error">{errors.diagnosis.message}</p>}
           </div>
 
           <div className="mb-4">
-            <label className="form-label">Notes</label>
-            <textarea className="form-input" rows={2} {...register('notes')} />
+            <label htmlFor="notes" className="form-label">Notes</label>
+            <textarea id="notes" className="form-input" rows={2} {...register('notes')} />
           </div>
 
           <div className="mb-4">
