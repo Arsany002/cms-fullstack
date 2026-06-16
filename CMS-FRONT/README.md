@@ -5,7 +5,7 @@ React SPA for the Clinic Management System backend built with Vite, React 18, Ta
 ## Prerequisites
 
 - Node.js ≥ 18
-- The Laravel CMS backend running at `http://localhost:8000`
+- The Laravel CMS backend running at `http://127.0.0.1:8001`
 
 ## Setup
 
@@ -19,14 +19,14 @@ npm install
 Copy `.env` and adjust if your backend runs on a different port:
 
 ```
-VITE_API_BASE_URL=http://localhost:8000/api/v1
+VITE_API_BASE_URL=http://127.0.0.1:8001/api/v1
 ```
 
 ## Run Dev Server
 
 ```bash
-npm run dev
-# App will be at http://localhost:5173
+npm run dev -- --host 127.0.0.1 --port 5174
+# App will be at http://127.0.0.1:5174
 ```
 
 ## Build for Production
@@ -38,32 +38,32 @@ npm run preview
 
 ## Playwright E2E Workflow
 
-Prerequisites: start the Docker stack from the repository root and ensure a Passport personal access client exists.
+Prerequisites: start the Laravel backend locally on `127.0.0.1:8001`. If this is the first setup, the database was reset, or auth says `Personal access client not found`, run `php artisan cms:local-setup` once from `CMS-BACK/`.
 
 ```bash
-cd ..
-docker compose up -d
-docker compose exec cms_backend php artisan passport:client --personal --name="CMS API" --no-interaction
+cd ../CMS-BACK
+php artisan cms:local-setup
+php artisan serve --host=127.0.0.1 --port=8001
 ```
 
 Useful test commands from `CMS-FRONT/`:
 
 ```bash
 # Delete only Playwright-owned data in local/testing
-npm run test:e2e:cleanup
+CMS_CLEANUP_COMMAND="cd ../CMS-BACK && php artisan cms:cleanup-test-data" npm run test:e2e:cleanup
 
 # Run the full suite
-TEST_BASE_URL=http://localhost:5173 npm run test:e2e
+TEST_BASE_URL=http://localhost:5174 TEST_API_URL=http://127.0.0.1:8001/api/v1 CMS_CLEANUP_COMMAND="cd ../CMS-BACK && php artisan cms:cleanup-test-data" npm run test:e2e
 
 # Rerun only tests that failed in the previous run
-TEST_BASE_URL=http://localhost:5173 npm run test:e2e:failed
+TEST_BASE_URL=http://localhost:5174 TEST_API_URL=http://127.0.0.1:8001/api/v1 CMS_CLEANUP_COMMAND="cd ../CMS-BACK && php artisan cms:cleanup-test-data" npm run test:e2e:failed
 
 # Run with the HTML reporter, then open the report
-TEST_BASE_URL=http://localhost:5173 npm run test:e2e:report
+TEST_BASE_URL=http://localhost:5174 TEST_API_URL=http://127.0.0.1:8001/api/v1 CMS_CLEANUP_COMMAND="cd ../CMS-BACK && php artisan cms:cleanup-test-data" npm run test:e2e:report
 npm run test:e2e:show-report
 
 # Interactive runner
-TEST_BASE_URL=http://localhost:5173 npm run test:e2e:ui
+TEST_BASE_URL=http://localhost:5174 TEST_API_URL=http://127.0.0.1:8001/api/v1 CMS_CLEANUP_COMMAND="cd ../CMS-BACK && php artisan cms:cleanup-test-data" npm run test:e2e:ui
 ```
 
 The suite runs `cms:cleanup-test-data` before setup and again during teardown. Cleanup is implemented as an Artisan command, refuses to run outside `local` or `testing`, and only targets Playwright-owned records with `playwright_` emails or `Playwright` names.
@@ -73,7 +73,7 @@ The suite runs `cms:cleanup-test-data` before setup and again during teardown. C
 In your Laravel `config/cors.php`, add the dev origin:
 
 ```php
-'allowed_origins' => ['http://localhost:5173'],
+'allowed_origins' => ['http://localhost:5174'],
 ```
 
 Then run:

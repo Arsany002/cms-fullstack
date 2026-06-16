@@ -1,4 +1,4 @@
-export const API_BASE = process.env.TEST_API_URL || 'http://localhost:8000/api/v1'
+export const API_BASE = process.env.TEST_API_URL || 'http://127.0.0.1:8001/api/v1'
 export const STATE_FILE = new URL('../.test-state.json', import.meta.url).pathname
 export const TEST_PREFIX = 'playwright'
 export const TEST_NAME_PREFIX = 'Playwright'

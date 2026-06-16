@@ -17,7 +17,7 @@ export default defineConfig({
     ],
 
     use: {
-        baseURL:       process.env.TEST_BASE_URL || 'http://localhost:5173',
+        baseURL:       process.env.TEST_BASE_URL || 'http://localhost:5174',
         trace:         'retain-on-failure',
         video:         'retain-on-failure',
         screenshot:    'only-on-failure',
